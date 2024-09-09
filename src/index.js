@@ -1,8 +1,11 @@
-import { initMongoDB } from './db/initMongoDB.js';
+import dotenv from 'dotenv';
+dotenv.config();
+import { initMongoConnection } from './db/initMongoDB.js';
 import { setupServer } from './server.js';
 
+
 const bootstrap = async () => {
-  await initMongoDB();
+  await initMongoConnection();
   setupServer();
 };
 bootstrap();
