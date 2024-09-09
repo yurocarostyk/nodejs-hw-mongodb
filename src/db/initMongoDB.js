@@ -1,21 +1,20 @@
- import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
-export async function initMongoConnection() {
-  const { MONGODB_USER, MONGODB_PASSWORD, MONGODB_DB, MONGODB_HOST } = process.env;
+import { env } from '../utils/env.js';
 
-  if (!MONGODB_USER || !MONGODB_PASSWORD || !MONGODB_DB || !MONGODB_HOST) {
-    throw new Error('Відсутні змінні середовища для підключення до MongoDB');
-  }
-
-  const uri = `mongodb+srv://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}/${MONGODB_DB}?retryWrites=true&w=majority`;
-
+export const initMongoConnection = async () => {
   try {
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected');
+    const user = env('MONGODB_USER');
+    const pwd = env('MONGODB_PASSWORD');
+    const url = env('MONGODB_URL');
+    const db = env('MONGODB_DB');
+
+    await mongoose.connect(
+      `mongodb+srv://${user}:${pwd}@${url}/${db}?retryWrites=true&w=majority&appName=Cluster0`,
+    );
+    console.log('Mongo connection successfully established!');
   } catch (error) {
-    console.error('Error connecting to MongoDB', error);
+    console.log('Error while setting up mongo connection', error);
+    throw error;
   }
-}
+};
