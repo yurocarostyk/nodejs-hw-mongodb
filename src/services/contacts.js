@@ -1,9 +1,45 @@
+import { SORT_ORDER } from '../constants/index.js';
 import { contactsCollection } from '../db/models/contact.js';
+import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
-export const getAllContacts = async () => {
-  const contacts = await contactsCollection.find();
+export const getAllContacts = async ({
+  page,
+  perPage,
+  sortBy = '_id',
+  sortOrder = SORT_ORDER[0],
+  filter = {},
+}) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
 
-  return contacts;
+  const contactsQuery = contactsCollection.find();
+
+  if (filter.contactType) {
+    contactsQuery.where('contactType').equals(filter.contactType);
+  }
+
+  if (filter.isFavourite) {
+    contactsQuery.where('isFavourite').equals(filter.isFavourite);
+  }
+
+  const [contactsCount, contacts] = await Promise.all([
+    await contactsCollection.find().merge(contactsQuery).countDocuments(),
+    contactsQuery
+      .skip(skip)
+      .limit(limit)
+      .sort({ [sortBy]: sortOrder })
+      .exec(),
+  ]);
+
+  const paginationData = calculatePaginationData(contactsCount, page, perPage);
+
+  return {
+    data: contacts,
+    page,
+    perPage,
+    totalItems: contactsCount,
+    ...paginationData,
+  };
 };
 
 export const getContactByID = async (id) => {
@@ -23,7 +59,6 @@ export const updateContact = async (studentId, payload, options = {}) => {
     { _id: studentId },
     payload,
     {
-      new: true,
       includeResultMetadata: true,
       ...options,
     },
