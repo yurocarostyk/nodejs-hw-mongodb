@@ -12,6 +12,8 @@ import { ctrlWrapper } from '../utils/ctrlWrapper.js';
 
 import { validateBody } from '../utils/validateBody.js';
 
+import { uploadPhoto } from '../middlewares/uploadPhoto.js';
+
 import {
   addContactValidationSchema,
   patchContactValidationSchema,
@@ -33,6 +35,7 @@ router.get(
 
 router.post(
   '/',
+  uploadPhoto.single('photo'),
   authenticate,
   validateBody(addContactValidationSchema),
   ctrlWrapper(createContactController),
@@ -42,6 +45,7 @@ router.patch(
   '/:contactId',
   authenticate,
   isValidId,
+  uploadPhoto.single('photo'),
   validateBody(patchContactValidationSchema),
   ctrlWrapper(patchContactController),
 );

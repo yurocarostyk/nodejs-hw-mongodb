@@ -1,11 +1,23 @@
 import createHttpError from 'http-errors';
 import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import handlebars from 'handlebars';
+import path from 'node:path';
+import fs from 'node:fs/promises';
 
 import UsersCollection from '../db/models/User.js';
 import SessionsCollection from '../db/models/Session.js';
 
-import { FIFTEEN_MINUTES, THIRTY_DAYS } from '../constants/index.js';
+import {
+  FIFTEEN_MINUTES,
+  SMTP,
+  TEMPLATES_DIR,
+  THIRTY_DAYS,
+} from '../constants/index.js';
+
+import { env } from '../utils/env.js';
+import { sendMail } from '../utils/sendMail.js';
+import { generateResetToken, verifyJwtToken } from '../utils/jwt.js';
 
 const generateTokens = () => {
   const accessToken = randomBytes(30).toString('base64');
@@ -87,4 +99,62 @@ export const refreshUser = async ({ refreshToken, sessionId }) => {
 
 export const logOutUser = async (sessionId) => {
   await SessionsCollection.deleteOne({ _id: sessionId });
+};
+
+export const requestResetToken = async ({ email }) => {
+  const user = await UsersCollection.findOne({ email });
+  if (!user) throw createHttpError(404, 'User not found');
+
+  const resetToken = generateResetToken(user);
+
+  const resetPasswordTemplate = path.join(
+    TEMPLATES_DIR,
+    'reset-password-email.html',
+  );
+  const templateSource = (await fs.readFile(resetPasswordTemplate)).toString();
+  const template = handlebars.compile(templateSource);
+  const html = template({
+    name: user.name,
+    link: `${env('APP_DOMAIN')}/reset-password?token=${resetToken}`,
+  });
+
+  try {
+    await sendMail({
+      from: env(SMTP.SMTP_FROM),
+      to: email,
+      subject: 'Reset your password',
+      html,
+    });
+  } catch (e) {
+    console.log('requestResetToken ~ e:', e);
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPassword = async (payload) => {
+  const { data, error } = verifyJwtToken(payload.token);
+
+  if (error) {
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+
+  const user = await UsersCollection.findOne({
+    email: data.email,
+    _id: data.sub,
+  });
+  if (!user) throw createHttpError(404, 'User not found');
+
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+  await UsersCollection.updateOne(
+    { _id: user._id },
+    { password: hashedPassword },
+  );
+
+  await SessionsCollection.findOneAndDelete({
+    userId: user._id,
+  });
 };
