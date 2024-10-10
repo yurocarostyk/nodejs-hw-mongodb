@@ -1,7 +1,3 @@
-
-
-
-
 import fs from 'node:fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
 
