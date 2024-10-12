@@ -118,21 +118,28 @@ export const requestResetToken = async ({ email }) => {
     link: `${env('APP_DOMAIN')}/reset-password?token=${resetToken}`,
   });
 
-  try {
-    await sendMail({
-      from: env(SMTP.SMTP_FROM),
-      to: email,
-      subject: 'Reset your password',
-      html,
-    });
-  } catch (e) {
-    console.log('requestResetToken ~ e:', e);
-    throw createHttpError(
-      500,
-      'Failed to send the email, please try again later.',
-    );
-  }
+//   try {
+//      await sendMail({
+//       from: env(SMTP.SMTP_FROM),
+//        to: email,
+//       subject: 'Reset your password',
+//        html,    });
+//   } catch (e) {
+//    console.log('requestResetToken ~ e:', e);
+//  throw createHttpError(
+//       500,       'Failed to send the email, please try again later.',
+//      );
+//   }
+//  };
+await sendEmail({
+  from: env(SMTP.SMTP_FROM),
+  to: email,
+  subject: 'Reset your password',
+  html,
+});
 };
+
+
 
 export const resetPassword = async (payload) => {
   const { data, error } = verifyJwtToken(payload.token);
