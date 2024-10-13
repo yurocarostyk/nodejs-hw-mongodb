@@ -56,6 +56,7 @@ export const loginUser = async ({ email, password }) => {
     throw createHttpError(401, 'Email or password is incorrect.');
   }
 
+  
   await SessionsCollection.deleteOne({ userId: user.id });
 
   const tokens = generateTokens();
@@ -73,19 +74,17 @@ export const refreshUser = async ({ refreshToken, sessionId }) => {
     _id: sessionId,
     refreshToken,
   });
+
   if (!oldSession) {
     throw createHttpError(401, 'Session not found');
   }
 
-  const isRefreshTokenExpired = new Date() > oldSession.refreshToken;
+  const isRefreshTokenExpired = new Date() > oldSession.refreshTokenValidUntil; // Замініть на правильне поле
   if (isRefreshTokenExpired) {
     throw createHttpError(401, 'Refresh token expired');
   }
 
-  await SessionsCollection.deleteOne({
-    sessionId,
-    refreshToken,
-  });
+  await SessionsCollection.deleteOne({ _id: sessionId });
 
   const tokens = generateTokens();
 
@@ -107,10 +106,7 @@ export const requestResetToken = async ({ email }) => {
 
   const resetToken = generateResetToken(user);
 
-  const resetPasswordTemplate = path.join(
-    TEMPLATES_DIR,
-    'reset-password-email.html',
-  );
+  const resetPasswordTemplate = path.join(TEMPLATES_DIR, 'reset-password-email.html');
   const templateSource = (await fs.readFile(resetPasswordTemplate)).toString();
   const template = handlebars.compile(templateSource);
   const html = template({
@@ -126,11 +122,8 @@ export const requestResetToken = async ({ email }) => {
       html,
     });
   } catch (e) {
-    console.log('requestResetToken ~ e:', e);
-    throw createHttpError(
-      500,
-      'Failed to send the email, please try again later.',
-    );
+    console.error('requestResetToken ~ e:', e);
+    throw createHttpError(500, 'Failed to send the email, please try again later.');
   }
 };
 
