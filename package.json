@@ -13,7 +13,7 @@
     "preview-docs": "redocly preview-docs"
   },
   "keywords": [],
-  "author": "Andrii Matsko <matskoandrew@gmail.com>",
+  "author": "Yurotsa Rostyslav <yurocarostyk@ukr.net>",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.9.1",
