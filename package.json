@@ -10,7 +10,7 @@
     "dev": "nodemon src/index.js"
   },
   "keywords": [],
-  "author": "Andrii Matsko <matskoandrew@gmail.com>",
+  "author": "Yurotsa Rostyslav <yurocarostyk@ukr.net>",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.9.1",
@@ -26,7 +26,6 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "express-validator": "^7.2.0",
     "handlebars": "^4.7.8",
     "http-errors": "^2.0.0",
     "joi": "^17.13.3",
